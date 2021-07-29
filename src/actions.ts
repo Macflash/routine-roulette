@@ -1,97 +1,52 @@
 import { Item, State, Wheel } from "./types";
-import { positive } from "./util";
+import { increment, makeAction, positive } from "./util";
 
 const brushTeeth: Item = {
     name: "Brush teeth",
-    description: "Clean your teeth",
-    action: (state: State) => {
-        console.log("You brushed your teeth!");
-        return {
-            ...state,
-            teethDirty: positive(state.teethDirty - 5),
-        };
-    }
+    icon: "🦷",
+    action: makeAction({ hygiene: 5 }),
 }
 
 const work: Item = {
     name: "Work",
-    description: "Do your job",
-    action: (state: State) => {
-        console.log("You did work!");
-        return {
-            ...state,
-            money: state.money + 10,
-            despair: state.despair + 1,
-            tired: state.tired + 2,
-        };
-    }
+    icon: '👔',
+    action: makeAction({ money: 25, fun: -20, rested: -10 }),
 }
 
 const sleep: Item = {
     name: "sleep",
-    description: "Sleepy time!",
-    action: (state: State) => {
-        console.log("You did sleep!");
-        return {
-            ...state,
-            tired: positive(state.tired - 40),
-        };
-    }
-}
-
-const drink: Item = {
-    name: "drink",
-    description: "Bottoms up!",
-    action: (state: State) => {
-        console.log("You drank!");
-        return {
-            ...state,
-            tired: state.tired + 1,
-            despair: positive(state.despair - 1),
-            money: state.money - 5,
-            thirst: positive(state.thirst - 5),
-            drunk: state.drunk + 2,
-        };
-    }
+    icon: '🛏️',
+    action: makeAction({rested: 50}),
 }
 
 const eat: Item = {
-    name: "eat",
-    description: "Yum!",
-    action: (state: State) => {
-        console.log("You drank!");
-        return {
-            ...state,
-            despair: positive(state.despair - 1),
-            money: state.money - 5,
-            hunger: positive(state.hunger - 25),
-        };
-    }
+    name: "Eat food",
+    action: makeAction({ fed: 50 }),
 }
 
 const drinkWater: Item = {
     name: "Drink Water",
-    description: "Wow!",
-    action: (state: State) => {
-        console.log("You drank!");
-        return {
-            ...state,
-            thirst: positive(state.thirst - 35),
-        };
-    }
+    action: state => increment(state, { hydration: 50 }),
 }
 
-export const allItems = [
+export const allItems: Item[] = [
     brushTeeth,
     work,
     sleep,
-    drink,
     eat,
     drinkWater,
+    {
+        name: "Yoga",
+        action: (state) => ({ ...state, fitness: state.fitness + 5 }),
+    },
+    {
+        name: "Beer",
+        action: state => ({ ...state, drunk: state.drunk + 1 })
+    }
 ]
 
 export const initialWheel: Wheel = {
     slots: [
         work, sleep, eat, drinkWater,
     ]
-}; 
+};

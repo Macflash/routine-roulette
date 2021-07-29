@@ -1,17 +1,30 @@
 import React from 'react';
 import { initialWheel, allItems } from './actions';
-import { State, maxStateValuesForDisplay, initialState, Wheel, Item } from './types';
+import { State, maxStateValuesForDisplay, initialState, Wheel, Item, StateIconMap } from './types';
 import { positive, RollWheel, Pick, CheckForGameOver, UpdateStateAtEndOfTurn } from './util';
 
 function Slider(props: { k: keyof State, state: State }) {
   const value = props.state[props.k];
   const maxVal = maxStateValuesForDisplay[props.k];
 
-  if (maxVal <= 0) { return null; }
+  const icon = StateIconMap[props.k];
 
-  return <div style={{ border: "2px solid black", margin: 5 }}>
-    <div style={{ width: `${100 * value / maxVal}%`, backgroundColor: "red", height: 15 }}></div>
-    <div></div>
+  const nameAndNum = <div><span style={{fontSize: 25}}>{icon?.icon}</span> {icon?.displayName || props.k}: {value}</div>;
+
+  if (maxVal <= 0) { return nameAndNum; }
+
+  let color = icon?.color ?? "grey";
+  let i = 0;
+  while((i < (icon?.slider?.length ?? 0)) && (value <= (icon!.slider![i].value))){
+    color = icon!.slider![i].color;
+    i++;
+  }
+
+  return <div>
+    {nameAndNum}
+    <div style={{ border: "2px solid black", margin: 5 }}>
+    <div style={{ width: `${100 * value / maxVal}%`, backgroundColor: color, height: 15 }}></div>
+  </div>
   </div>
 }
 
@@ -37,7 +50,10 @@ function App() {
             height: 80,
             width: 80,
             textAlign: "center",
-            border: selectedItem == i ? (isSpinning ? "5px solid yellow" : "5px solid red") : "2px solid black"
+            border: "2px solid black",
+            margin: 2,
+            //border: selectedItem == i ? (isSpinning ? "2px solid gold" : "2px solid red") : "2px solid black",
+            backgroundColor: selectedItem == i ? (isSpinning ? "yellow" : "orange") : "#DDD",
           }}
           key={i}>
           {s.name}
@@ -103,8 +119,7 @@ function App() {
         }
       </div>
       <div style={{ color: isGameOver ? "grey" : undefined }}>
-        {Object.keys(state).map(k => <div key={k}>
-          {k}: {(state as any)[k]}
+        {Object.keys(state).filter(k => (state as any)[k] > 0).map(k => <div key={k}>
           <Slider k={k as any} state={state} />
         </div>)}
       </div>

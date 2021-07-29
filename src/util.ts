@@ -16,19 +16,64 @@ export function positive(num: number) {
     return Math.max(0, num);
 }
 
+export function below(num: number, max: number) {
+    return Math.min(max, num);
+}
+
+export function positiveBelow(num: number, max: number) {
+    return positive(below(num, max));
+}
+
+export function increment<T>(state: T, update: Partial<T>): T {
+    state = { ...state };
+    for (let key in update) {
+        (state as any)[key] = (state as any)[key] + (update as any)[key];
+    }
+    return state;
+}
+
+export function makeAction(update: Partial<State>) {
+    return (state: State) => increment(state, update);
+}
+
+export function ScoreStateAtEndOfTurn(state: State) {
+    let score = 0;
+
+    // 
+
+
+    return score;
+}
+
 export function UpdateStateAtEndOfTurn(state: State): State {
     state = { ...state };
 
     state.turn++;
 
-    state.drunk = positive(state.drunk--);
+    state.score += ScoreStateAtEndOfTurn(state);
 
-    state.hunger++;
-    state.thirst++;
+    // do any fun stuff here with the new values
 
-    state.fitness = positive(state.fitness - 1);
+    if (state.fed > 100) {
+        const overage = state.fed - maxStateValuesForDisplay.fed;
+        state.fat += .1 * overage;
+    }
+
+    // bound all values!
+    for (let key of Object.keys(state)) {
+        boundStateValue(key as keyof State, state);
+    }
 
     return state;
+}
+
+export function boundStateValue(key: keyof State, state: State) {
+    if (maxStateValuesForDisplay[key] > 0) {
+        state[key] = positiveBelow(state[key], maxStateValuesForDisplay[key]);
+    }
+    else {
+        state[key] = positive(state[key]);
+    }
 }
 
 export function checkStateValue(key: keyof State, state: State): boolean {
@@ -44,26 +89,11 @@ export function checkStateValue(key: keyof State, state: State): boolean {
 }
 
 export function CheckForGameOver(state: State): string {
-    if (checkStateValue("tired", state)) {
-        return "You got so tired you died!";
-    }
-    if (checkStateValue("despair", state)) {
-        return "You got too sad!";
-    }
     if (checkStateValue("money", state)) {
         return "You went broke!";
     }
-    if (checkStateValue("teethDirty", state)) {
-        return "Your teeth fell out!";
-    }
     if (checkStateValue("drunk", state)) {
         return "You got too drunk!";
-    }
-    if (checkStateValue("hunger", state)) {
-        return "You starved!";
-    }
-    if (checkStateValue("thirst", state)) {
-        return "You forgot to hydrate, homie!";
     }
 
     return '';
