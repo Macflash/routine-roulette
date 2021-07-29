@@ -24,12 +24,26 @@ export function positiveBelow(num: number, max: number) {
     return positive(below(num, max));
 }
 
+// export function stat(state: State, key: string){
+//     return (state as any)[key];
+// }
+
 export function increment<T>(state: T, update: Partial<T>): T {
     state = { ...state };
     for (let key in update) {
         (state as any)[key] = (state as any)[key] + (update as any)[key];
     }
     return state;
+}
+
+export function sumScores(scores: Partial<State>){
+    let sum = 0;
+
+    for(let k in scores){
+        sum += (scores as any)[k];
+    }
+
+    return sum;
 }
 
 export function makeAction(update: Partial<State>) {

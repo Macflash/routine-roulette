@@ -11,22 +11,26 @@ const work: Item = {
     name: "Work",
     icon: '👔',
     action: makeAction({ money: 25, rested: -10 }),
+    score: (oldState, newState) => ({money: Math.floor(newState.money / 100)}),
 }
 
 const sleep: Item = {
     name: "sleep",
     icon: '🛏️',
     action: makeAction({rested: 50}),
+    score: (oldState, newState) => ({rested: Math.floor(newState.rested / 10)}),
 }
 
 const eat: Item = {
     name: "Eat food",
     action: makeAction({ fed: 50 }),
+    score: (oldState, newState) => ({fed: Math.floor((100 - oldState.fed) / 10)}),
 }
 
 const drinkWater: Item = {
     name: "Drink Water",
     action: state => increment(state, { hydration: 50 }),
+    score: (oldState, newState) => ({hydration: Math.floor((100 - oldState.hydration) / 10)}),
 }
 
 export const allItems: Item[] = [

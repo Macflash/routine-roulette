@@ -69,6 +69,7 @@ export const maxStateValuesForDisplay: State = {
 
 export interface Item {
   action: (state: State) => State;
+  score?: (oldState: State, newState: State) => Partial<State>; // each piece represents the SCORE gained per stat
   name: string;
   icon?: string;
   // IDK, maybe it should just be a percentage? Or do we need to convert this to that?

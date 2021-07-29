@@ -1,15 +1,17 @@
 import React from 'react';
 import { initialWheel, allItems } from './actions';
 import { State, maxStateValuesForDisplay, initialState, Wheel, Item, StateIconMap } from './types';
-import { positive, RollWheel, Pick, CheckForGameOver, UpdateStateAtEndOfTurn } from './util';
+import { positive, RollWheel, Pick, CheckForGameOver, UpdateStateAtEndOfTurn, sumScores } from './util';
 
-function Slider(props: { k: keyof State, state: State }) {
+function Slider(props: { k: keyof State, state: State, score?: number }) {
   const value = props.state[props.k];
   const maxVal = maxStateValuesForDisplay[props.k];
 
   const icon = StateIconMap[props.k];
 
-  const nameAndNum = <div><span style={{ fontSize: 25 }}>{icon?.icon}</span> {icon?.displayName || props.k}: {value}</div>;
+  const nameAndNum = <div>
+    <span style={{ fontSize: 25 }}>{icon?.icon}</span> {icon?.displayName || props.k}: {value} {props.score ? <span style={{fontWeight: "bold", color: "red", fontSize: 20}}>+{props.score}</span> : null}
+  </div>;
 
   if (maxVal <= 0) { return nameAndNum; }
 
@@ -38,6 +40,8 @@ function App() {
   const [isGameOver, setIsGameOver] = React.useState('');
 
   const [newItems, setNewItems] = React.useState<Item[] | null>(null);
+
+  const [isScoring, setIsScoring] = React.useState<Partial<State>|null>(null);
 
   return (
     <div className="App">
@@ -84,9 +88,48 @@ function App() {
           <button disabled={isSpinning || !!newItems} onClick={() => {
             // !
             setIsSpinning(true);
+            setIsScoring(null);
             const result = RollWheel(wheel);
             const interval = 150;
             let selectedItemLocal = selectedItem;
+
+            // TODO: animate it to make it look better?
+            // function animateScoring(scores: Partial<State>, i: number){
+            //   const current = (scores as any)[Object.keys(scores)[i]];
+            //   if(!current){
+            //     setIsScoring(false);
+            //     setSelectedStat(-1);
+            //     return;
+            //   }
+
+            //   // show the indicator!
+
+            // }
+
+            function updateWhenSelected(){
+              let newState = result.action({...state})
+              newState = UpdateStateAtEndOfTurn(newState);
+              setState(newState);
+
+              // SHOW the score!
+              const scores = result.score?.({...state}, newState);
+              if(scores){
+                setIsScoring(scores);
+                // animateScoring(scores, 0);
+                newState.score += sumScores(scores);
+              }
+
+              setIsSpinning(false); 
+              setIsGameOver(CheckForGameOver(newState));
+
+              if (newState.turn % 7 == 0) {
+                setNewItems([
+                  Pick(allItems),
+                  Pick(allItems),
+                  Pick(allItems),
+                ]);
+              }
+            }
 
             function advanceSelection(steps: number) {
               const newSelection = selectedItemLocal++ % wheel.slots.length;
@@ -95,20 +138,7 @@ function App() {
                 setTimeout(() => advanceSelection(steps + 1), interval);
               }
               else {
-                setIsSpinning(false);
-
-                let newState = result.action(state)
-                newState = UpdateStateAtEndOfTurn(newState);
-                setState(newState);
-                setIsGameOver(CheckForGameOver(newState));
-
-                if (newState.turn % 7 == 0) {
-                  setNewItems([
-                    Pick(allItems),
-                    Pick(allItems),
-                    Pick(allItems),
-                  ]);
-                }
+                updateWhenSelected();
               }
             }
 
@@ -120,7 +150,7 @@ function App() {
       </div>
       <div style={{ color: isGameOver ? "grey" : undefined }}>
         {Object.keys(state).filter(k => (state as any)[k] > 0).map(k => <div key={k}>
-          <Slider k={k as any} state={state} />
+          <Slider k={k as any} state={state} score={(isScoring as any)?.[k]} />
         </div>)}
       </div>
     </div>
