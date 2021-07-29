@@ -9,22 +9,22 @@ function Slider(props: { k: keyof State, state: State }) {
 
   const icon = StateIconMap[props.k];
 
-  const nameAndNum = <div><span style={{fontSize: 25}}>{icon?.icon}</span> {icon?.displayName || props.k}: {value}</div>;
+  const nameAndNum = <div><span style={{ fontSize: 25 }}>{icon?.icon}</span> {icon?.displayName || props.k}: {value}</div>;
 
   if (maxVal <= 0) { return nameAndNum; }
 
   let color = icon?.color ?? "grey";
   let i = 0;
-  while((i < (icon?.slider?.length ?? 0)) && (value <= (icon!.slider![i].value))){
+  while ((i < (icon?.slider?.length ?? 0)) && (value <= (icon!.slider![i].value))) {
     color = icon!.slider![i].color;
     i++;
   }
 
   return <div>
     {nameAndNum}
-    <div style={{ border: "2px solid black", margin: 5 }}>
-    <div style={{ width: `${100 * value / maxVal}%`, backgroundColor: color, height: 15 }}></div>
-  </div>
+    <div style={{ border: "2px solid black", margin: 5, backgroundColor: "#DEEDEEDEE", overflow: "hidden" }}>
+      <div style={{ width: `${100 * value / maxVal}%`, backgroundColor: color, height: 15, borderRight: "2px solid black" }}></div>
+    </div>
   </div>
 }
 

@@ -45,19 +45,22 @@ export function ScoreStateAtEndOfTurn(state: State) {
     return score;
 }
 
+export function statOverage(state:State, key: keyof State, overageKey: keyof State, multiplier = 1){
+    const max = maxStateValuesForDisplay[key];
+    if (state[key] > max) {
+        state[key] += multiplier * (state[key] - max);
+    }
+}
+
 export function UpdateStateAtEndOfTurn(state: State): State {
     state = { ...state };
 
     state.turn++;
-
     state.score += ScoreStateAtEndOfTurn(state);
 
     // do any fun stuff here with the new values
-
-    if (state.fed > 100) {
-        const overage = state.fed - maxStateValuesForDisplay.fed;
-        state.fat += .1 * overage;
-    }
+    statOverage(state, "fed", "fat", .1);
+    statOverage(state, "drunk", "sick", 4);
 
     // bound all values!
     for (let key of Object.keys(state)) {

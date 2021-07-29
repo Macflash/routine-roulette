@@ -10,7 +10,7 @@ const brushTeeth: Item = {
 const work: Item = {
     name: "Work",
     icon: '👔',
-    action: makeAction({ money: 25, fun: -20, rested: -10 }),
+    action: makeAction({ money: 25, rested: -10 }),
 }
 
 const sleep: Item = {
