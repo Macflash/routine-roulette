@@ -24,10 +24,6 @@ export function positiveBelow(num: number, max: number) {
     return positive(below(num, max));
 }
 
-// export function stat(state: State, key: string){
-//     return (state as any)[key];
-// }
-
 export function increment<T>(state: T, update: Partial<T>): T {
     state = { ...state };
     for (let key in update) {
@@ -50,27 +46,17 @@ export function makeAction(update: Partial<State>) {
     return (state: State) => increment(state, update);
 }
 
-export function ScoreStateAtEndOfTurn(state: State) {
-    let score = 0;
-
-    // 
-
-
-    return score;
-}
-
 export function statOverage(state:State, key: keyof State, overageKey: keyof State, multiplier = 1){
     const max = maxStateValuesForDisplay[key];
     if (state[key] > max) {
-        state[key] += multiplier * (state[key] - max);
+        state[overageKey] += multiplier * (state[key] - max);
     }
 }
 
-export function UpdateStateAtEndOfTurn(state: State): State {
+export function UpdateStateAtEndOfTurn(state: State, incrementTurn = true): State {
     state = { ...state };
 
-    state.turn++;
-    state.score += ScoreStateAtEndOfTurn(state);
+    incrementTurn && state.turn++;
 
     // do any fun stuff here with the new values
     statOverage(state, "fed", "fat", .1);
@@ -108,9 +94,6 @@ export function checkStateValue(key: keyof State, state: State): boolean {
 export function CheckForGameOver(state: State): string {
     if (checkStateValue("money", state)) {
         return "You went broke!";
-    }
-    if (checkStateValue("drunk", state)) {
-        return "You got too drunk!";
     }
 
     return '';

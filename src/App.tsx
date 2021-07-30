@@ -10,7 +10,7 @@ function Slider(props: { k: keyof State, state: State, score?: number }) {
   const icon = StateIconMap[props.k];
 
   const nameAndNum = <div>
-    <span style={{ fontSize: 25 }}>{icon?.icon}</span> {icon?.displayName || props.k}: {value} {props.score ? <span style={{fontWeight: "bold", color: "red", fontSize: 20}}>+{props.score}</span> : null}
+    <span style={{ fontSize: 25 }}>{icon?.icon}</span> {icon?.displayName || props.k}: {value} {props.score ? <span style={{ fontWeight: "bold", color: "red", fontSize: 20 }}>+{props.score}</span> : null}
   </div>;
 
   if (maxVal <= 0) { return nameAndNum; }
@@ -35,39 +35,49 @@ function App() {
   const [wheel, setWheel] = React.useState<Wheel>(initialWheel);
 
   const [isSpinning, setIsSpinning] = React.useState(false);
+  const [isScoring, setIsScoring] = React.useState<Partial<State> | null>(null);
   const [selectedItem, setSelectedItem] = React.useState(-1);
 
   const [isGameOver, setIsGameOver] = React.useState('');
 
   const [newItems, setNewItems] = React.useState<Item[] | null>(null);
 
-  const [isScoring, setIsScoring] = React.useState<Partial<State>|null>(null);
+  const [selectedNewItem, setSelectedNewItem] = React.useState(-1);
 
   return (
     <div className="App">
       <div className="Wheel" style={{ display: "flex", flexWrap: "wrap" }}>
-        {wheel.slots.map((s, i) => <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            height: 80,
-            width: 80,
-            textAlign: "center",
-            border: "2px solid black",
-            margin: 2,
-            //border: selectedItem == i ? (isSpinning ? "2px solid gold" : "2px solid red") : "2px solid black",
-            backgroundColor: selectedItem == i ? (isSpinning ? "yellow" : "orange") : "#DDD",
-          }}
-          key={i}>
-          {s.name}
+        {wheel.slots.map((s, i) => <div style={{display: "flex", alignItems: "center"}}>
+          {newItems && selectedNewItem >= 0 ? <button onClick={() => {
+            const newSlots = [...wheel.slots];
+            newSlots.splice(i, 0, newItems[selectedNewItem]);
+            setWheel({ ...wheel, slots: newSlots });
+            setSelectedNewItem(-1);
+            setNewItems(null);
+          }}>+</button> : null}
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              height: 80,
+              width: 80,
+              textAlign: "center",
+              border: "2px solid black",
+              margin: 2,
+              //border: selectedItem == i ? (isSpinning ? "2px solid gold" : "2px solid red") : "2px solid black",
+              backgroundColor: selectedItem == i ? (isSpinning ? "yellow" : "orange") : "#DDD",
+            }}
+            key={i}>
+            {s.name}
+          </div>
         </div>)}
       </div>
       {newItems ? <div className="NewItems" style={{ border: "3px solid black", margin: 10, }}>
         <div>Choose a new item to add to your routine!</div>
-        {newItems.map(n => <button style={{ border: "2px solid black", height: 80, width: 80, margin: 10 }} onClick={() => {
-          setNewItems(null);
-          setWheel({ ...wheel, slots: [...wheel.slots, n] });
+        {newItems.map((n, i) => <button style={{ border: "2px solid black", height: 80, width: 80, margin: 10, backgroundColor: selectedNewItem == i ? "lightblue" : undefined }} onClick={() => {
+          setSelectedNewItem(i);
+          // setWheel({ ...wheel, slots: [...wheel.slots, n] });
         }}>{n.name}</button>)}
       </div> : null}
       <div id="Controls">
@@ -85,67 +95,104 @@ function App() {
               }}>New game</button>
             </div>
           </div> :
-          <button disabled={isSpinning || !!newItems} onClick={() => {
-            // !
-            setIsSpinning(true);
-            setIsScoring(null);
-            const result = RollWheel(wheel);
-            const interval = 150;
-            let selectedItemLocal = selectedItem;
+          <div>
+            <button disabled={true || isSpinning || !!newItems} onClick={() => {
+              // !
+              setIsSpinning(true);
+              setIsScoring(null);
+              const result = RollWheel(wheel);
+              const interval = 150;
+              let selectedItemLocal = selectedItem;
 
-            // TODO: animate it to make it look better?
-            // function animateScoring(scores: Partial<State>, i: number){
-            //   const current = (scores as any)[Object.keys(scores)[i]];
-            //   if(!current){
-            //     setIsScoring(false);
-            //     setSelectedStat(-1);
-            //     return;
-            //   }
+              function updateWhenSelected() {
+                let newState = result.action({ ...state })
+                newState = UpdateStateAtEndOfTurn(newState);
+                setState(newState);
 
-            //   // show the indicator!
+                // SHOW the score!
+                const scores = result.score?.({ ...state }, newState);
+                if (scores) {
+                  setIsScoring(scores);
+                  // animateScoring(scores, 0);
+                  newState.score += sumScores(scores);
+                }
 
-            // }
+                setIsSpinning(false);
+                setIsGameOver(CheckForGameOver(newState));
 
-            function updateWhenSelected(){
-              let newState = result.action({...state})
-              newState = UpdateStateAtEndOfTurn(newState);
-              setState(newState);
-
-              // SHOW the score!
-              const scores = result.score?.({...state}, newState);
-              if(scores){
-                setIsScoring(scores);
-                // animateScoring(scores, 0);
-                newState.score += sumScores(scores);
+                if (newState.turn % 7 == 0) {
+                  setNewItems([
+                    Pick(allItems),
+                    Pick(allItems),
+                    Pick(allItems),
+                  ]);
+                }
               }
 
-              setIsSpinning(false); 
-              setIsGameOver(CheckForGameOver(newState));
-
-              if (newState.turn % 7 == 0) {
-                setNewItems([
-                  Pick(allItems),
-                  Pick(allItems),
-                  Pick(allItems),
-                ]);
+              function advanceSelection(steps: number) {
+                const newSelection = selectedItemLocal++ % wheel.slots.length;
+                setSelectedItem(newSelection);
+                if (wheel.slots[newSelection] != result || Math.random() < .3 || steps < 3) {
+                  setTimeout(() => advanceSelection(steps + 1), interval);
+                }
+                else {
+                  updateWhenSelected();
+                }
               }
-            }
 
-            function advanceSelection(steps: number) {
-              const newSelection = selectedItemLocal++ % wheel.slots.length;
-              setSelectedItem(newSelection);
-              if (wheel.slots[newSelection] != result || Math.random() < .3 || steps < 3) {
-                setTimeout(() => advanceSelection(steps + 1), interval);
-              }
-              else {
-                updateWhenSelected();
-              }
-            }
+              advanceSelection(0);
+            }}>
+              Roll!
+            </button>
+            <button disabled={isSpinning || !!newItems} onClick={() => {
+              // RUN A FULL DAY OF YOUR ROUTINE
+              setIsSpinning(true);
+              setIsScoring(null);
 
-            advanceSelection(0);
-          }}>
-            Roll!
-          </button>
+              // Go through ALL actions in ORDER (unless modifiers do things later)
+              function DoTaskAndAdvance(oldState: State, i: number) {
+                if (i >= wheel.slots.length) {
+                  setSelectedItem(-1);
+                  setIsSpinning(false);
+                  setIsScoring(null);
+
+                  if (state.turn % 7 == 0) {
+                    setNewItems([
+                      Pick(allItems),
+                      Pick(allItems),
+                      Pick(allItems),
+                    ]);
+                  }
+
+                  return;
+                }
+
+                setSelectedItem(i);
+                const task = wheel.slots[i];
+
+                // update state
+                let newState = task.action({ ...oldState });
+                newState = UpdateStateAtEndOfTurn(newState, i == 0);
+
+                const scores = task.score?.({ ...oldState }, { ...newState });
+                if (scores) {
+                  setIsScoring(scores);
+                  newState.score += sumScores(scores);
+                }
+                else {
+                  setIsScoring(null);
+                }
+
+                setState(newState);
+                setIsGameOver(CheckForGameOver(newState));
+                setTimeout(() => { DoTaskAndAdvance(newState, i + 1) }, 250);
+              }
+
+              DoTaskAndAdvance(state, 0);
+            }}>
+              Go! (run a day)
+            </button>
+          </div>
         }
       </div>
       <div style={{ color: isGameOver ? "grey" : undefined }}>

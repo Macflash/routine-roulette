@@ -51,6 +51,6 @@ export const allItems: Item[] = [
 
 export const initialWheel: Wheel = {
     slots: [
-        work, sleep, eat, drinkWater,
+        work, eat, drinkWater, sleep, 
     ]
 };
